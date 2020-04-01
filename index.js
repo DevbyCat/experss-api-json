@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/api/courses', (req, res) => {
-    db.any('SELECT * FROM accounts')
+    db.any('SELECT * FROM accounts ORDER BY id ASC')
         .then(function (data) {
             res.status(200).json({
                status: 'success',
@@ -37,7 +37,7 @@ app.get('/api/courses/:id', (req, res) => {
             res.status(200).json({
             status: 'success',
             data: data,
-            message: 'Return objects'
+            message: 'Return object'
             })
         })
         .catch(function (error) {
@@ -59,20 +59,26 @@ app.post('/api/courses', (req, res) => {
 })
 
 app.put('/api/courses/:id', (req, res) => {
-    const course = courses.find(c => c.id === parseInt(req.params.id))
-    if (!course) res.status(404).send('The courses with the gived id')
-
-    course.name = req.body.name
-    res.status(200).send(courses)
+    db.none('UPDATE accounts SET first_name=$1, last_name=$2 WHERE id =$3 ', [req.body.first_name, req.body.last_name, parseInt(req.params.id)])
+        .then(() => {
+            res.status(200).json({
+                status: 'success',
+                massage: 'Updated account'
+            })
+        })
+        .catch((error) => res.send(`Error : ${ error }`))
 })
 
 app.delete('/api/courses/:id', (req, res) => {
-    const course = courses.find(c => c.id === parseInt(req.params.id))
-    if (!course) res.status(404).send('The courses with the gived id')
-
-    const index = courses.indexOf(course)
-    courses.splice(index, 1)
-    res.status(200).send(courses)
+    const accountId = parseInt(req.params.id)
+    db.result('DELETE FROM accounts WHERE id = $1', accountId)
+        .then(() => {
+            res.status(200).json({
+                status: 'success',
+                message: 'Deleted account'
+            })
+        })
+        .catch( error => res.send(`Error: ${ error }`) )
 })
 
 const port = process.env.PORT || 5000
