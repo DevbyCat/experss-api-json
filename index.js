@@ -1,4 +1,7 @@
 const express = require('express')
+const pgp = require('pg-promise')()
+const db = pgp('postgres://postgres:admin@localhost:5432/postgres')
+
 const app = express()
 
 app.use(express.json())
@@ -9,25 +12,50 @@ const courses = [
 ]
 
 app.get('/', (req, res) => {
-    res.send('Hello World')
+   res.send('Hello World')
 })
 
 app.get('/api/courses', (req, res) => {
-    res.send(courses)
+    db.any('SELECT * FROM accounts')
+        .then(function (data) {
+            res.status(200).json({
+               status: 'success',
+               data: data,
+               message: 'Return objects'
+            })
+        })
+        .catch(function (error) {
+            res.send(`Error : ${ error } `)
+    })
 })
 
 app.get('/api/courses/:id', (req, res) => {
-   let year = req.params.id
-   res.send(year)
+    const id = parseInt(req.params.id)
+
+    db.one('SELECT * FROM accounts WHERE id = $1', id)
+        .then(function (data) {
+            res.status(200).json({
+            status: 'success',
+            data: data,
+            message: 'Return objects'
+            })
+        })
+        .catch(function (error) {
+            res.send(`Error : ${ error } `)
+        })
 })
 
 app.post('/api/courses', (req, res) => {
-    const course = {
-        id: courses.length + 1,
-        name: req.body.name
-    }   
-    courses.push(course)
-    res.send(courses)
+    db.none('INSERT INTO accounts( first_name, last_name) VALUES (${first_name}, ${last_name})', req.body)
+        .then(function () {
+            res.status(200).json({
+                status: 'success',
+                message: 'Inserted account'
+            })
+        })
+        .catch(function (error) {
+            res.send(`Error : ${ error } `)
+        })
 })
 
 app.put('/api/courses/:id', (req, res) => {
